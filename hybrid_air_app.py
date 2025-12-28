@@ -37,11 +37,16 @@ default_file = 'Data_Analysis/global_air_pollution_clean_data_set.csv'
 csv_files = glob.glob("*.csv") + glob.glob("**/*.csv", recursive=True)
 df_hist = None
 
+if "data_loaded_notification" not in st.session_state:
+    st.session_state.data_loaded_notification = False
+
 if os.path.exists(default_file):
     df_hist = process_air_data(default_file)
-    st.toast(f"Đã tự động nạp dữ liệu: {default_file}")
+    if not st.session_state.data_loaded_notification:
+        st.toast(f"Đã tự động nạp dữ liệu: {default_file}")
+        st.session_state.data_loaded_notification = True
 elif csv_files:
-    selected_f = st.selectbox("Không tìm thấy file mặc định. Vui lòng chọn file dữ liệu từ thư mục:", csv_files)
+    selected_f = st.selectbox("Không tìm thấy file mặc định. Vui lòng chọn file dữ liệu:", csv_files)
     df_hist = process_air_data(selected_f)
 else:
     st.error("Không tìm thấy tệp dữ liệu CSV nào trong thư mục!")
