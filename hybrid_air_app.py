@@ -122,7 +122,7 @@ if df_hist is not None:
                                          'steps' : [{'range': [0, 15], 'color': "#27ae60"}, 
                                                     {'range': [15, 50], 'color': "#f1c40f"}, 
                                                     {'range': [50, 150], 'color': "#e74c3c"}]}))
-                            st.plotly_chart(apply_adaptive_theme(fig_g), use_container_width=True)
+                            st.plotly_chart(apply_adaptive_theme(fig_g), width='stretch')
                         with cr:
                             st.subheader("Cảnh báo y tế")
                             if pm25_val >= 55.5:
@@ -145,7 +145,7 @@ if df_hist is not None:
             sel_c = st.selectbox("Chọn quốc gia:", country_list, index=0)
             c_df = df_hist[df_hist['Country'] == sel_c].sort_values('AQI Value')
             fig_l = px.area(c_df, x='City', y=['AQI Value', 'PM2.5 AQI Value'], title=f"Biến thiên tại {sel_c}")
-            st.plotly_chart(apply_adaptive_theme(fig_l), use_container_width=True)
+            st.plotly_chart(apply_adaptive_theme(fig_l), width='stretch')
 
         with tab_map:
             st.subheader("Bản đồ điểm nóng AQI")
@@ -172,7 +172,7 @@ if df_hist is not None:
             
             with st.spinner("Đang trích xuất hồ sơ..."):
                 fig_map.update_layout(margin={"r":0,"t":10,"l":0,"b":0}, height=650, coloraxis_showscale=False, clickmode='event+select')
-                event_data = st.plotly_chart(fig_map, use_container_width=True, on_select="rerun", key="geo_map")
+                event_data = st.plotly_chart(fig_map, width='stretch', on_select="rerun", key="geo_map")
             
             if event_data and "selection" in event_data and len(event_data["selection"]["points"]) > 0:
                 st.session_state.clicked_data = event_data["selection"]["points"][0]["customdata"]
@@ -201,7 +201,7 @@ if df_hist is not None:
                                     color=[aqi_val, co, o3, no2, pm25], color_continuous_scale=plotly_colorscale, 
                                     range_color=[0, 500], text_auto=True)
                 fig_detail.update_layout(height=400, coloraxis_showscale=False, transition_duration=500)
-                st.plotly_chart(fig_detail, use_container_width=True)
+                st.plotly_chart(fig_detail, width='stretch')
             else:
                 st.info("**Hướng dẫn:** Nhấn vào một chấm tròn trên bản đồ để xem hồ sơ dữ liệu chi tiết của khu vực đó.")
 
@@ -209,6 +209,6 @@ if df_hist is not None:
             st.subheader("Phân bổ cơ cấu chất khí")
             p_sums = df_hist[['CO AQI Value', 'Ozone AQI Value', 'NO2 AQI Value', 'PM2.5 AQI Value']].mean()
             fig_pie = px.pie(values=p_sums, names=["CO", "O3", "NO2", "PM2.5"], hole=0.5)
-            st.plotly_chart(apply_adaptive_theme(fig_pie), use_container_width=True)
+            st.plotly_chart(apply_adaptive_theme(fig_pie), width='stretch')
 else:
     st.info("Vui lòng nạp dữ liệu CSV.")
