@@ -1,0 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+.stApp {
+    font-family: 'Inter', sans-serif;
+}
+
+section[data-testid="stSidebar"] {
+    display: none;
+}
+
+/* Menu Topbar Navigation */
+.stRadio > div {
+    flex-direction: row;
+    justify-content: center;
+    background: rgba(128, 128, 128, 0.05);
+    backdrop-filter: blur(10px);
+    padding: 10px 25px;
+    border-radius: 50px;
+    margin-bottom: 30px;
+    border: 1px solid rgba(128, 128, 128, 0.1);
+}
+
+/* Thẻ Metric hiện đại */
+div[data-testid="stMetric"] {
+    background: rgba(128, 128, 128, 0.05) !important;
+    backdrop-filter: blur(15px);
+    border-radius: 18px !important;
+    padding: 20px !important;
+    border: 1px solid rgba(128, 128, 128, 0.1) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+.status-card {
+    border-radius: 15px;
+    padding: 20px;
+    color: white !important;
+    text-align: center;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+/* Thanh trượt AQI có dải màu */
+div[data-baseweb="slider"] > div:first-child {
+    background: linear-gradient(to right, #00e400, #ffff00, #ff7e00, #ff0000, #8f3f97, #7e0023) !important;
+    height: 12px !important;
+    border-radius: 6px !important;
+}
+
+div[data-baseweb="slider"] [role="slider"] {
+    background-color: #ffffff !important;
+    border: 2px solid #555 !important;
+    height: 22px !important;
+    width: 22px !important;
+}
