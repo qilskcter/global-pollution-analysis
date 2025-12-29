@@ -98,7 +98,8 @@ if df_hist is not None:
                     value_map[selected],
                     df_hist[cfg["col"]].mean(),
                     cfg["max"],
-                    cfg["steps"]
+                    cfg["steps"],
+                    cfg["unit"]
                 ),
                 use_container_width=True
             )
@@ -225,4 +226,5 @@ if df_hist is not None:
 else:
 
     st.info("Vui lòng nạp dữ liệu CSV.")
+
 
