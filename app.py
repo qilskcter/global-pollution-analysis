@@ -50,23 +50,53 @@ if df_hist is not None:
 
         if btn_scan and city_input:
             result, error = get_realtime_data(city_input)
-            if error: st.error(error)
+            if not error:
+                st.session_state.realtime_result = result
+                st.session_state.selected_city = city_input
             else:
-                st.success(f"Kết nối thành công! {result['name']}, {result['country']}")
-                comp = result['components']
-                m1, m2, m3, m4 = st.columns(4)
-                m1.metric("PM2.5", f"{comp['pm2_5']} µg/m³")
-                m2.metric("NO2", f"{comp['no2']} µg/m³")
-                m3.metric("CO", f"{round(comp['co']/1000, 2)} mg/m³")
-                m4.metric("Ozone", f"{comp['o3']} µg/m³")
-                
-                st.divider()
-                cg, cr = st.columns([1.5, 1])
-                with cg:
-                    st.plotly_chart(create_gauge(comp['pm2_5'], df_hist['AQI Value'].mean()), width='stretch')
-                with cr:
-                    st.subheader("Cảnh báo y tế")
-                    display_health_card(comp['pm2_5'])
+                st.error(error)
+
+        if "realtime_result" in st.session_state:
+            result = st.session_state.realtime_result
+            city_input = st.session_state.selected_city
+
+            st.success(f"Kết nối thành công! {result['name']}, {result['country']}")
+            comp = result['components']
+
+            city_hist = df_hist[df_hist['City'].str.lower() == city_input.lower()]
+            aqi_val = city_hist.iloc[0]['AQI Value'] if not city_hist.empty else df_hist['AQI Value'].mean()
+
+            st.subheader("⚠️ Cảnh báo y tế")
+            display_health_card(comp['pm2_5'])
+
+            st.markdown("### Chọn chỉ số cần xem")
+
+            selected = st.selectbox(
+                "Chỉ số môi trường:",
+                ["AQI", "CO", "NO2", "Ozone", "PM2.5"],
+                key="gauge_select"
+            )
+
+            value_map = {
+                "AQI": aqi_val,
+                "CO": comp['co'],
+                "NO2": comp['no2'],
+                "Ozone": comp['o3'],
+                "PM2.5": comp['pm2_5']
+            }
+
+            cfg = GAUGE_CFG[selected]
+
+            st.plotly_chart(
+                create_gauge(
+                    selected,
+                    value_map[selected],
+                    df_hist[cfg["col"]].mean(),
+                    cfg["max"],
+                    cfg["steps"]
+                ),
+                use_container_width=True
+            )
 
     else:
         tab_line, tab_map, tab_pie = st.tabs(["Diễn biến ô nhiễm", "Bản đồ điểm nóng", "Cơ cấu chất khí"])
@@ -188,4 +218,5 @@ if df_hist is not None:
             else:
                 st.info("Không có dữ liệu cho lựa chọn này.")
 else:
+
     st.info("Vui lòng nạp dữ liệu CSV.")
