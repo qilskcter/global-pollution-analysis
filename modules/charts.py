@@ -14,6 +14,7 @@ GAUGE_CFG = {
     "AQI": {
         "col": "AQI Value",
         "max": 500,
+        "unit": " AQI",
         "steps": [
             {'range': [0, 50], 'color': "#00e400"},
             {'range': [50, 100], 'color': "#ffff00"},
@@ -26,6 +27,7 @@ GAUGE_CFG = {
     "CO": {
         "col": "CO AQI Value",
         "max": 200,
+        "unit": " µg/m³",
         "steps": [
             {'range': [0, 40], 'color': "#27ae60"},
             {'range': [40, 100], 'color': "#f1c40f"},
@@ -35,6 +37,7 @@ GAUGE_CFG = {
     "NO2": {
         "col": "NO2 AQI Value",
         "max": 50,
+        "unit": " µg/m³",
         "steps": [
             {'range': [0, 9], 'color': "#27ae60"},
             {'range': [9, 30], 'color': "#f1c40f"},
@@ -44,6 +47,7 @@ GAUGE_CFG = {
     "Ozone": {
         "col": "Ozone AQI Value",
         "max": 200,
+        "unit": " µg/m³",
         "steps": [
             {'range': [0, 60], 'color': "#27ae60"},
             {'range': [60, 120], 'color': "#f1c40f"},
@@ -53,6 +57,7 @@ GAUGE_CFG = {
     "PM2.5": {
         "col": "PM2.5 AQI Value",
         "max": 150,
+        "unit": " µg/m³",
         "steps": [
             {'range': [0, 15], 'color': "#27ae60"},
             {'range': [15, 50], 'color': "#f1c40f"},
@@ -61,20 +66,31 @@ GAUGE_CFG = {
     }
 }
 
-def create_gauge(title, value, avg, max_val, steps):
+def create_gauge(title, value, avg, max_val, steps, unit=""):
     fig = go.Figure(go.Indicator(
         mode="gauge+number+delta",
         value=value,
-        delta={'reference': avg},
-        title={'text': title},
+        number={
+            "suffix": unit,
+            "font": {"size": 26}
+        },
+        delta={
+            "reference": avg,
+            "relative": False,
+            "valueformat": ".1f",
+            "suffix": unit,
+            "increasing": {"color": "#e74c3c"},
+            "decreasing": {"color": "#27ae60"}
+        },
+        title={"text": f"{title} (so với TB lịch sử)"},
         gauge={
-            'axis': {'range': [0, max_val]},
-            'bar': {'color': "gray"},
-            'steps': steps
+            "axis": {"range": [0, max_val]},
+            "bar": {"color": "#7f8c8d"},
+            "steps": steps
         }
     ))
 
-    fig.update_layout(height=260)  
+    fig.update_layout(height=260)
     return apply_adaptive_theme(fig)
 
 def create_main_map(df, scope, colorscale):
@@ -128,3 +144,4 @@ def create_main_map(df, scope, colorscale):
     
 
     return fig
+
