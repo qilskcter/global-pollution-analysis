@@ -134,8 +134,58 @@ if df_hist is not None:
             st.plotly_chart(apply_adaptive_theme(fig_l), width='stretch')
 
         with tab_pie:
-            p_sums = df_hist[['CO AQI Value', 'Ozone AQI Value', 'NO2 AQI Value', 'PM2.5 AQI Value']].mean()
-            fig_pie = px.pie(values=p_sums, names=["CO", "O3", "NO2", "PM2.5"], hole=0.5)
-            st.plotly_chart(apply_adaptive_theme(fig_pie), width='stretch')
+            st.subheader("Cơ cấu chất khí theo khu vực")
+            if 'Continent' not in df_hist.columns:
+                from modules.data_handler import get_continent_from_country
+                df_hist['Continent'] = df_hist['Country'].apply(get_continent_from_country)
+
+            col_sel1, col_sel2 = st.columns(2)
+            
+            with col_sel1:
+                available_continents = ["Toàn cầu"] + sorted(df_hist['Continent'].unique().tolist())
+                sel_continent = st.selectbox("Chọn Châu lục:", available_continents)
+            
+            with col_sel2:
+                if sel_continent == "Toàn cầu":
+                    countries_filtered = sorted(df_hist['Country'].unique().tolist())
+                else:
+                    countries_filtered = sorted(df_hist[df_hist['Continent'] == sel_continent]['Country'].unique().tolist())
+                
+                sel_country = st.selectbox(f"Chọn quốc gia ({sel_continent}):", ["Tất cả"] + countries_filtered)
+
+            if sel_continent == "Toàn cầu":
+                if sel_country == "Tất cả":
+                    df_pie = df_hist
+                else:
+                    df_pie = df_hist[df_hist['Country'] == sel_country]
+            else:
+                if sel_country == "Tất cả":
+                    df_pie = df_hist[df_hist['Continent'] == sel_continent]
+                else:
+                    df_pie = df_hist[df_hist['Country'] == sel_country]
+
+            if not df_pie.empty:
+                gas_cols = ['CO AQI Value', 'Ozone AQI Value', 'NO2 AQI Value', 'PM2.5 AQI Value']
+                p_sums = df_pie[gas_cols].mean()
+                clean_names = [n.replace(' AQI Value', '') for n in gas_cols]
+                
+                fig_pie = px.pie(
+                    values=p_sums, 
+                    names=clean_names, 
+                    hole=0.5,
+                    color_discrete_sequence=px.colors.qualitative.Pastel
+                )
+                
+                fig_pie.update_traces(
+                    textinfo='percent+label',
+                    marker=dict(line=dict(color='#FFFFFF', width=2))
+                )
+                
+                title_text = f"Cơ cấu khí thải tại: {sel_country if sel_country != 'Tất cả' else sel_continent}"
+                fig_pie.update_layout(title=title_text, showlegend=True)
+                
+                st.plotly_chart(apply_adaptive_theme(fig_pie), width='stretch')
+            else:
+                st.info("Không có dữ liệu cho lựa chọn này.")
 else:
     st.info("Vui lòng nạp dữ liệu CSV.")
