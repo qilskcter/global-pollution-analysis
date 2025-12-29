@@ -9,7 +9,7 @@ from modules.charts import *
 from modules.ui_utils import load_css, display_health_card
 
 st.set_page_config(
-    page_title="AirGuard Hybrid", 
+    page_title="Pollution Analysis", 
     layout="wide", 
     page_icon="https://img.icons8.com/color/48/air-quality.png"
 )
@@ -33,7 +33,7 @@ else:
         uploaded_file = st.file_uploader("Tải tệp dữ liệu CSV:", type=["csv"])
         if uploaded_file: df_hist = process_air_data(uploaded_file)
 
-st.markdown('<h1 style="text-align: center; margin-top: -30px;">AIRGUARD HYBRID</h1>', unsafe_allow_html=True)
+st.markdown('<h1 style="text-align: center; margin-top: -30px;">POLLUTION ANALYSIS</h1>', unsafe_allow_html=True)
 
 if df_hist is not None:
     menu = st.radio("", ["Giám sát Real-time & Đối sánh", "Phân tích Lịch sử & Diễn biến"], horizontal=True, label_visibility="collapsed")
