@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import os
-from modules.data_handler import process_air_data, find_all_csv
+from modules.data_handler import process_air_data, find_all_csv, get_continent_from_country
 from modules.api_service import get_realtime_data
 from modules.charts import *
 from modules.ui_utils import load_css, display_health_card
@@ -67,14 +67,11 @@ if df_hist is not None:
         if btn_scan and city_input:
             if city_choice == "-- Chọn thành phố --":
                 st.error("Lỗi: Vui lòng chọn một thành phố trước khi tìm kiếm!")
-
             elif city_choice == "Thành phố khác" and not city_input:
                 st.error("Lỗi: Vui lòng nhập tên thành phố vào ô trống!")
-
             else:
                 with st.spinner(f"Đang tìm kiếm {city_input}..."):
                     result, error = get_realtime_data(city_input)
-                    
                     if not error:
                         if result and 'name' in result:
                             st.session_state.realtime_result = result
@@ -82,15 +79,12 @@ if df_hist is not None:
                         else:
                             st.error("Dữ liệu API trả về không đúng định dạng.")
                     else:
-                        st.error(f"Lỗi: {error}")
+                        st.error(f"Lỗi: {error}")            
 
         if "realtime_result" in st.session_state:
             result = st.session_state.realtime_result
             city_input = st.session_state.selected_city
             
-            city_name = result.get('name', city_input)
-            country_name = result.get('country', 'N/A')
-
             if 'components' in result:
                 comp = result['components']
             elif 'list' in result:
@@ -99,12 +93,7 @@ if df_hist is not None:
                 st.error("Không tìm thấy dữ liệu thành phần không khí.")
                 st.stop()
 
-        if "realtime_result" in st.session_state:
-            result = st.session_state.realtime_result
-            city_input = st.session_state.selected_city
-
-            st.success(f"Kết nối thành công! {result['name']}, {result['country']}")
-            comp = result['components']
+            st.success(f"Kết nối thành công! {result.get('name', city_input)}, {result.get('country', 'N/A')}")
 
             city_hist = df_hist[df_hist['City'].str.lower() == city_input.lower()]
 
@@ -118,34 +107,17 @@ if df_hist is not None:
             display_health_card(comp['pm2_5'])
 
             st.markdown("### Chọn chỉ số cần xem")
-
-            selected = st.selectbox(
-                "Chỉ số môi trường:",
-                ["AQI", "CO", "NO2", "Ozone", "PM2.5"],
-                key="gauge_select"
-            )
+            selected = st.selectbox("Chỉ số môi trường:", ["AQI", "CO", "NO2", "Ozone", "PM2.5"], key="gauge_select")
 
             value_map = {
-                "AQI": row["AQI Value"],
-                "CO": row["CO AQI Value"],
-                "NO2": row["NO2 AQI Value"],
-                "Ozone": row["Ozone AQI Value"],
-                "PM2.5": row["PM2.5 AQI Value"]
+                "AQI": row["AQI Value"], "CO": row["CO AQI Value"],
+                "NO2": row["NO2 AQI Value"], "Ozone": row["Ozone AQI Value"], "PM2.5": row["PM2.5 AQI Value"]
             }
 
             cfg = GAUGE_CFG[selected]
-
             st.markdown('<div style="margin-top: 50px;"></div>', unsafe_allow_html=True)
-
             st.plotly_chart(
-                create_gauge(
-                    selected,
-                    value_map[selected],
-                    df_hist[cfg["col"]].mean(),
-                    cfg["max"],
-                    cfg["steps"],
-                    cfg["unit"]
-                ),
+                create_gauge(selected, value_map[selected], df_hist[cfg["col"]].mean(), cfg["max"], cfg["steps"], cfg["unit"]),
                 width='stretch'
             )
 
@@ -158,13 +130,11 @@ if df_hist is not None:
             col_sel1, col_sel2 = st.columns([1, 2])
             with col_sel1: sel_cont = st.selectbox("Khu vực:", list(continent_map.keys()))
             with col_sel2: aqi_range = st.select_slider('AQI:', options=list(range(501)), value=(0, 500))
-            st.markdown(f"", unsafe_allow_html=True)
 
             aqi_colors = [(0, "#00e400"), (50, "#ffff00"), (100, "#ff7e00"), (150, "#ff0000"), (200, "#8f3f97"), (500, "#7e0023")]
             colorscale = [[v/500, c] for v, c in aqi_colors]
             
             m_df = df_hist[(df_hist['AQI Value'] >= aqi_range[0]) & (df_hist['AQI Value'] <= aqi_range[1])]
-            
             if len(m_df) > 500:
                 m_df = m_df.sample(n=500, random_state=42)
 
@@ -177,127 +147,49 @@ if df_hist is not None:
                 st.markdown(f"**Top 5 ({sel_cont})**")
                 for _, row in m_df.nlargest(5, 'AQI Value').iterrows():
                     c_code = next((c for v, c in reversed(aqi_colors) if row['AQI Value'] >= v), "#00e400")
-                    st.markdown(f"""
-                        <div style="
-                            border-left: 5px solid {c_code}; 
-                            padding: 10px; 
-                            background: rgba(128, 128, 128, 0.1); 
-                            border-radius: 8px;
-                            margin-bottom: 8px;
-                            line-height: 1.4;
-                        ">
-                            <div style="
-                                font-size: 0.85rem; 
-                                opacity: 0.8;
-                                font-weight: 500;
-                            ">
-                                {row["City"]}
-                            </div>
-                            <div style="
-                                font-size: 1.1rem; 
-                                font-weight: 700;
-                            ">
-                                AQI: <span style="color: {c_code};">{row["AQI Value"]}</span>
-                            </div>
-                        </div>
-                    """, unsafe_allow_html=True)
+                    st.markdown(f"""<div style="border-left: 5px solid {c_code}; padding: 10px; background: rgba(128, 128, 128, 0.1); border-radius: 8px; margin-bottom: 8px; line-height: 1.4;"><div style="font-size: 0.85rem; opacity: 0.8; font-weight: 500;">{row["City"]}</div><div style="font-size: 1.1rem; font-weight: 700;">AQI: <span style="color: {c_code};">{row["AQI Value"]}</span></div></div>""", unsafe_allow_html=True)
 
             if event and "selection" in event and len(event["selection"]["points"]) > 0:
-                st.session_state.clicked_data = event["selection"]["points"][0]["customdata"]
-            
-            if st.session_state.get("clicked_data"):
-                p = st.session_state.clicked_data
+                p = event["selection"]["points"][0]["customdata"]
                 city, country, aqi_val, co, o3, no2, pm25 = p
-                
                 active_color = next((c for v, c in reversed(aqi_colors) if aqi_val >= v), "#00e400")
-                
-                st.markdown(f"""
-                    <div class="detail-container" style="
-                        padding: 20px; 
-                        border-left: 10px solid {active_color}; 
-                        background: rgba(128, 128, 128, 0.1); 
-                        border-radius: 15px; 
-                        margin-top: 20px;
-                        border-top: 1px solid rgba(128, 128, 128, 0.05);
-                    ">
-                        <h2 style="margin:0; font-weight: 700;">{city}, {country}</h2>
-                        <p style="margin:10px 0 0 0; font-size: 1.1rem; opacity: 0.9;">
-                            Chỉ số AQI tổng hợp: 
-                            <b style="color:{active_color}; font-size: 1.5rem; margin-left: 5px;">{aqi_val}</b>
-                        </p>
-                    </div>
-                    """, unsafe_allow_html=True)
-
+                st.markdown(f"""<div class="detail-container" style="padding: 20px; border-left: 10px solid {active_color}; background: rgba(128, 128, 128, 0.1); border-radius: 15px; margin-top: 20px; border-top: 1px solid rgba(128, 128, 128, 0.05);"><h2 style="margin:0; font-weight: 700;">{city}, {country}</h2><p style="margin:10px 0 0 0; font-size: 1.1rem; opacity: 0.9;">Chỉ số AQI tổng hợp: <b style="color:{active_color}; font-size: 1.5rem; margin-left: 5px;">{aqi_val}</b></p></div>""", unsafe_allow_html=True)
                 st.write("#### Thông tin chi tiết từ Dataset")
                 c1, c2, c3, c4 = st.columns(4)
-                c1.metric("PM2.5 AQI", pm25)
-                c2.metric("NO2 AQI", no2)
-                c3.metric("Ozone AQI", o3)
-                c4.metric("CO AQI", co)
-
-                fig_detail = px.bar(x=["AQI", "CO", "O3", "NO2", "PM2.5"], y=[aqi_val, co, o3, no2, pm25],
-                                    color=[aqi_val, co, o3, no2, pm25], color_continuous_scale=colorscale, 
-                                    range_color=[0, 500], text_auto=True)
+                c1.metric("PM2.5 AQI", pm25); c2.metric("NO2 AQI", no2); c3.metric("Ozone AQI", o3); c4.metric("CO AQI", co)
+                fig_detail = px.bar(x=["AQI", "CO", "O3", "NO2", "PM2.5"], y=[aqi_val, co, o3, no2, pm25], color=[aqi_val, co, o3, no2, pm25], color_continuous_scale=colorscale, range_color=[0, 500], text_auto=True)
                 fig_detail.update_layout(height=400, coloraxis_showscale=False, transition_duration=500)
                 st.plotly_chart(fig_detail, width='stretch')
-
             else:
-                st.info("**Hướng dẫn:** Nhấn vào một chấm tròn trên bản đồ để xem hồ sơ dữ liệu chi tiết của khu vực đó.")
+                st.info("**Hướng dẫn:** Nhấn vào một chấm tròn trên bản đồ để xem chi tiết.")
 
         with tab_line:
             st.subheader("Diễn biến ô nhiễm theo khu vực")
-            
             if 'Continent' not in df_hist.columns:
-                from modules.data_handler import get_continent_from_country
                 df_hist['Continent'] = df_hist['Country'].apply(get_continent_from_country)
-
             col_l1, col_l2 = st.columns(2)
-            
             with col_l1:
                 line_continents = ["Toàn cầu"] + sorted(df_hist['Continent'].unique().tolist())
                 sel_line_cont = st.selectbox("Khu vực:", line_continents, key="line_cont_sel")
-            
             with col_l2:
-                if sel_line_cont == "Toàn cầu":
-                    line_countries = sorted(df_hist['Country'].unique().tolist())
-                else:
-                    line_countries = sorted(df_hist[df_hist['Continent'] == sel_line_cont]['Country'].unique().tolist())
-                
+                line_countries = sorted(df_hist['Country'].unique().tolist()) if sel_line_cont == "Toàn cầu" else sorted(df_hist[df_hist['Continent'] == sel_line_cont]['Country'].unique().tolist())
                 sel_line_country = st.selectbox(f"Quốc gia ({sel_line_cont}):", line_countries, key="line_country_sel")
-
             df_line = df_hist[df_hist['Country'] == sel_line_country].sort_values('AQI Value')
-
             if not df_line.empty:
-                fig_l = px.area(
-                    df_line, 
-                    x='City', 
-                    y=['AQI Value', 'PM2.5 AQI Value'],
-                    title=f"Chỉ số AQI tại các thành phố của {sel_line_country}",
-                    labels={"value": "Chỉ số", "variable": "Loại chỉ số"}
-                )
+                fig_l = px.area(df_line, x='City', y=['AQI Value', 'PM2.5 AQI Value'], title=f"Chỉ số AQI tại các thành phố của {sel_line_country}", labels={"value": "Chỉ số", "variable": "Loại chỉ số"})
                 st.plotly_chart(apply_adaptive_theme(fig_l), width='stretch')
-            else:
-                st.info("Không có dữ liệu cho quốc gia này.")
 
         with tab_pie:
             st.subheader("Cơ cấu chất khí theo khu vực")
             if 'Continent' not in df_hist.columns:
-                from modules.data_handler import get_continent_from_country
                 df_hist['Continent'] = df_hist['Country'].apply(get_continent_from_country)
-
             col_sel1, col_sel2 = st.columns(2)
-            
             with col_sel1:
                 available_continents = ["Toàn cầu"] + sorted(df_hist['Continent'].unique().tolist())
-                sel_continent = st.selectbox("Khu vực:", available_continents)
-            
+                sel_continent = st.selectbox("Khu vực:", available_continents, key="p_c_s")
             with col_sel2:
-                if sel_continent == "Toàn cầu":
-                    countries_filtered = sorted(df_hist['Country'].unique().tolist())
-                else:
-                    countries_filtered = sorted(df_hist[df_hist['Continent'] == sel_continent]['Country'].unique().tolist())
-                
-                sel_country = st.selectbox(f"Quốc gia ({sel_continent}):", ["Tất cả"] + countries_filtered)
+                countries_filtered = sorted(df_hist['Country'].unique().tolist()) if sel_continent == "Toàn cầu" else sorted(df_hist[df_hist['Continent'] == sel_continent]['Country'].unique().tolist())
+                sel_country = st.selectbox(f"Quốc gia ({sel_continent}):", ["Tất cả"] + countries_filtered, key="p_s_c")
 
             if sel_continent == "Toàn cầu":
                 if sel_country == "Tất cả":
@@ -314,25 +206,10 @@ if df_hist is not None:
                 gas_cols = ['CO AQI Value', 'Ozone AQI Value', 'NO2 AQI Value', 'PM2.5 AQI Value']
                 p_sums = df_pie[gas_cols].mean()
                 clean_names = [n.replace(' AQI Value', '') for n in gas_cols]
-                
-                fig_pie = px.pie(
-                    values=p_sums, 
-                    names=clean_names, 
-                    hole=0.5,
-                    color_discrete_sequence=px.colors.qualitative.Pastel
-                )
-                
-                fig_pie.update_traces(
-                    textinfo='percent+label',
-                    marker=dict(line=dict(color='#FFFFFF', width=2))
-                )
-                
-                title_text = f"Cơ cấu khí thải tại: {sel_country if sel_country != 'Tất cả' else sel_continent}"
-                fig_pie.update_layout(title=title_text, showlegend=True)
-                
+                fig_pie = px.pie(values=p_sums, names=clean_names, hole=0.5, color_discrete_sequence=px.colors.qualitative.Pastel)
+                fig_pie.update_traces(textinfo='percent+label', marker=dict(line=dict(color='#FFFFFF', width=2)))
+                fig_pie.update_layout(title=f"Cơ cấu khí thải tại: {sel_country if sel_country != 'Tất cả' else sel_continent}", showlegend=True)
                 st.plotly_chart(apply_adaptive_theme(fig_pie), width='stretch')
-            else:
-                st.info("Không có dữ liệu cho lựa chọn này.")
+                
 else:
-
     st.info("Vui lòng nạp dữ liệu CSV.")
