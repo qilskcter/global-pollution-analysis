@@ -40,6 +40,7 @@ if df_hist is not None:
     st.markdown("---")
 
     if menu == "Giám sát Real-time & Đối sánh":
+        st.subheader("Giám sát Real-time & Đối sánh")
         c_in, _ = st.columns([1.5, 2.5])
         with c_in:
             available_cities = sorted(df_hist['City'].unique().tolist()) if 'City' in df_hist.columns else []
@@ -110,6 +111,7 @@ if df_hist is not None:
         tab_line, tab_map, tab_pie = st.tabs(["Diễn biến ô nhiễm", "Bản đồ điểm nóng", "Cơ cấu chất khí"])
         
         with tab_map:
+            st.subheader("Bản đồ điểm nóng toàn cầu")
             continent_map = {"Toàn cầu": "world", "Châu Á": "asia", "Châu Âu": "europe", "Châu Phi": "africa", "Bắc Mỹ": "north america", "Nam Mỹ": "south america"}
             col_sel1, col_sel2 = st.columns([1, 2])
             with col_sel1: sel_cont = st.selectbox("Khu vực:", list(continent_map.keys()))
@@ -201,9 +203,39 @@ if df_hist is not None:
                 st.info("**Hướng dẫn:** Nhấn vào một chấm tròn trên bản đồ để xem hồ sơ dữ liệu chi tiết của khu vực đó.")
 
         with tab_line:
-            sel_c = st.selectbox("Chọn quốc gia:", sorted(df_hist['Country'].unique()))
-            fig_l = px.area(df_hist[df_hist['Country'] == sel_c].sort_values('AQI Value'), x='City', y=['AQI Value', 'PM2.5 AQI Value'])
-            st.plotly_chart(apply_adaptive_theme(fig_l), width='stretch')
+            st.subheader("Diễn biến ô nhiễm theo khu vực")
+            
+            if 'Continent' not in df_hist.columns:
+                from modules.data_handler import get_continent_from_country
+                df_hist['Continent'] = df_hist['Country'].apply(get_continent_from_country)
+
+            col_l1, col_l2 = st.columns(2)
+            
+            with col_l1:
+                line_continents = ["Toàn cầu"] + sorted(df_hist['Continent'].unique().tolist())
+                sel_line_cont = st.selectbox("Chọn Châu lục:", line_continents, key="line_cont_sel")
+            
+            with col_l2:
+                if sel_line_cont == "Toàn cầu":
+                    line_countries = sorted(df_hist['Country'].unique().tolist())
+                else:
+                    line_countries = sorted(df_hist[df_hist['Continent'] == sel_line_cont]['Country'].unique().tolist())
+                
+                sel_line_country = st.selectbox(f"Chọn quốc gia ({sel_line_cont}):", line_countries, key="line_country_sel")
+
+            df_line = df_hist[df_hist['Country'] == sel_line_country].sort_values('AQI Value')
+
+            if not df_line.empty:
+                fig_l = px.area(
+                    df_line, 
+                    x='City', 
+                    y=['AQI Value', 'PM2.5 AQI Value'],
+                    title=f"Chỉ số AQI tại các thành phố của {sel_line_country}",
+                    labels={"value": "Chỉ số", "variable": "Loại chỉ số"}
+                )
+                st.plotly_chart(apply_adaptive_theme(fig_l), width='stretch')
+            else:
+                st.info("Không có dữ liệu cho quốc gia này.")
 
         with tab_pie:
             st.subheader("Cơ cấu chất khí theo khu vực")
