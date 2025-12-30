@@ -28,7 +28,7 @@ Dựa trên dữ liệu thu thập và xử lý, dự án đã rút ra các kế
 
 ## Kết quả thu được
 
-[➤Click here](pollutionanalysis.streamlit.app)
+[➤Click here](https://github.com/qilskcter/global-pollution-analysis)
 
 ## Liên hệ
 
