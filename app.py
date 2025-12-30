@@ -33,11 +33,17 @@ else:
         uploaded_file = st.file_uploader("Tải tệp dữ liệu CSV:", type=["csv"])
         if uploaded_file: df_hist = process_air_data(uploaded_file)
 
-st.markdown('<h1 style="text-align: center; margin-top: -30px;">POLLUTION ANALYSIS</h1>', unsafe_allow_html=True)
-
 if df_hist is not None:
-    menu = st.radio("", ["Giám sát Real-time & Đối sánh", "Phân tích Lịch sử & Diễn biến"], horizontal=True, label_visibility="collapsed")
-    st.markdown("---")
+    st.markdown('<div class="title-wrapper"><h1 class="main-title">POLLUTION ANALYSIS</h1></div>', unsafe_allow_html=True)
+
+    with st.container():
+        menu = st.radio(
+            "", 
+            ["Giám sát Real-time & Đối sánh", "Phân tích Lịch sử & Diễn biến"], 
+            horizontal=True, 
+            label_visibility="collapsed",
+            key="navigation_menu" 
+        )
 
     if menu == "Giám sát Real-time & Đối sánh":
         st.subheader("Giám sát Real-time & Đối sánh")

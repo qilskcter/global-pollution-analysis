@@ -27,28 +27,91 @@ section[data-testid="stSidebar"] {
     display: none;
 }
 
-.stRadio > div {
-    flex-direction: row;
-    justify-content: center;
+.title-wrapper {
+    width: 100% !important;
+    height: 110px !important; 
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+}
+
+.main-title {
+    text-align: center !important;
+    font-size: 3.5rem !important;
+    font-weight: 800 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+}
+
+div[data-testid="stVerticalBlock"] > div:has(div.stRadio),
+div[data-testid="stVerticalBlock"] > div > div:has(div.stRadio),
+.stRadio {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+}
+
+.stRadio > div[role="radiogroup"] {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 15px !important;
+    width: fit-content !important;
     background: var(--glass-bg);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
-    padding: 8px 20px;
-    border-radius: 30px;
-    margin-bottom: 30px;
+    padding: 8px 16px;
+    border-radius: 40px;
     border: 1px solid var(--glass-border);
-    box-shadow: var(--card-shadow);
+    margin: 0 auto !important;
+}
+
+div[data-testid="stRadio"] div[role="radiogroup"] label [data-testid="stWidgetSelectionMarker"],
+div[data-testid="stRadio"] div[role="radiogroup"] label svg,
+div[data-testid="stRadio"] div[role="radiogroup"] label circle {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+div[data-testid="stRadio"] div[role="radiogroup"] label > div:first-child {
+    display: none !important;
 }
 
 .stRadio div[role="radiogroup"] label {
-    transition: all 0.3s ease;
-    padding: 5px 10px;
-    border-radius: 15px;
+    margin: 0 !important;
+    padding: 10px 25px !important;
+    border-radius: 30px !important;
+    transition: all 0.3s ease !important;
+    opacity: 0.3; 
+    cursor: pointer;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
 }
 
-.stRadio div[role="radiogroup"] label:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: scale(1.05);
+.stRadio div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.stRadio div[role="radiogroup"] label:has(input:checked) {
+    opacity: 1 !important;
+    background: var(--st-orange-light) !important;
+    border: 1px solid var(--st-orange) !important;
+    color: var(--st-orange) !important;
+    transform: translateY(-3px) !important;
+    box-shadow: 0 4px 12px rgba(255, 75, 75, 0.2) !important;
+}
+
+div[data-testid="stVerticalBlock"] > div:has(div.stRadio) {
+    display: flex;
+    justify-content: center;
 }
 
 div[data-testid="stMetric"] {
@@ -159,7 +222,7 @@ div.stButton > button {
 div.stButton > button:hover {
     transform: translateY(-3px) scale(1.02);
     border-color: var(--st-orange) !important;
-    background-color: var(--glass-bg) !important;
+    background-color: rgba(255, 75, 75, 0.2) !important;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2) !important;
     color: var(--st-orange) !important;
 }
@@ -205,12 +268,10 @@ div[data-baseweb="select"]:hover > div:first-child {
 
 div[data-baseweb="select"]:focus-within > div:first-child {
     border-color: var(--st-orange) !important;
-    box-shadow: 0 0 0 2px var(--glass-bg) !important;
+    box-shadow: 0 0 0 2px rgba(255, 75, 75, 0.2) !important;
 }
 
 ul[data-baseweb="menu"] {
-    background-color: var(--glass-bg) !important;
-    border-radius: 12px !important;
     border: 1px solid var(--glass-border) !important;
     -webkit-backdrop-filter: blur(15px) !important;
     backdrop-filter: blur(15px) !important;
@@ -230,7 +291,7 @@ li[data-baseweb="menu-item"] {
 }
 
 li[data-baseweb="menu-item"]:hover {
-    background-color: var(--glass-bg) !important;
+    background-color: rgba(255, 75, 75, 0.2) !important;
     color: var(--st-orange) !important;
     padding-left: 20px !important;
 }
