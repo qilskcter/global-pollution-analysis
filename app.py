@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import os
-from streamlit_searchbox import st_searchbox
 from modules.data_handler import process_air_data, find_all_csv
 from modules.api_service import get_realtime_data
 from modules.charts import *
@@ -50,18 +49,55 @@ if df_hist is not None:
         c_in, _ = st.columns([1.5, 2.5])
         with c_in:
             available_cities = sorted(df_hist['City'].unique().tolist()) if 'City' in df_hist.columns else []
-            def search_cities(t): return [c for c in available_cities if t.lower() in c.lower()][:20]
             
-            city_input = st_searchbox(search_cities, label="Nhập tên thành phố:", key="city_search")
+            city_choice = st.selectbox(
+                "Chọn từ dữ liệu hoặc nhập tên mới:",
+                options= ["-- Chọn thành phố --"] + ["Thành phố khác"] + available_cities,
+                index=0,
+                key="city_select_combined"
+            )
+
+            if city_choice == "Nhập thành phố khác":
+                city_input = st.text_input("Nhập chính xác tên thành phố:", key="city_manual_input")
+            else:
+                city_input = city_choice
+                
             btn_scan = st.button("Tìm kiếm")
 
         if btn_scan and city_input:
-            result, error = get_realtime_data(city_input)
-            if not error:
-                st.session_state.realtime_result = result
-                st.session_state.selected_city = city_input
+            if city_choice == "-- Chọn thành phố --":
+                st.error("Lỗi: Vui lòng chọn một thành phố trước khi tìm kiếm!")
+
+            elif city_choice == "Thành phố khác" and not city_input:
+                st.error("Lỗi: Vui lòng nhập tên thành phố vào ô trống!")
+
             else:
-                st.error(error)
+                with st.spinner(f"Đang tìm kiếm {city_input}..."):
+                    result, error = get_realtime_data(city_input)
+                    
+                    if not error:
+                        if result and 'name' in result:
+                            st.session_state.realtime_result = result
+                            st.session_state.selected_city = city_input
+                        else:
+                            st.error("Dữ liệu API trả về không đúng định dạng.")
+                    else:
+                        st.error(f"Lỗi: {error}")
+
+        if "realtime_result" in st.session_state:
+            result = st.session_state.realtime_result
+            city_input = st.session_state.selected_city
+            
+            city_name = result.get('name', city_input)
+            country_name = result.get('country', 'N/A')
+
+            if 'components' in result:
+                comp = result['components']
+            elif 'list' in result:
+                comp = result['list'][0]['components']
+            else:
+                st.error("Không tìm thấy dữ liệu thành phần không khí.")
+                st.stop()
 
         if "realtime_result" in st.session_state:
             result = st.session_state.realtime_result
